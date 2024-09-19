@@ -83,6 +83,10 @@ for mcc in range(1, num_MC + 1):
     # Visualization (Interactive 3D Plotting with Plotly)
     ###############################################################
 
+    # Initialize legend flags outside the step loop to add legend entries only once
+    clutter_legend_added = False
+    sp_meas_legend_added = False
+
     # Loop over all time steps and plot the positions incrementally
     for step in range(K):
         # Create a new figure for each iteration
@@ -94,7 +98,7 @@ for mcc in range(1, num_MC + 1):
             y=[BS[1, 0]],
             z=[BS[2, 0]],
             mode='markers+text',
-            marker=dict(size=5, color='red'),  # Increased marker size for better visibility
+            marker=dict(size=5, color='red'),
             text=['BS'],
             textposition='top center',
             name='BS'
@@ -124,25 +128,25 @@ for mcc in range(1, num_MC + 1):
             name='SP'
         ))
 
-        # Plot user's trajectory up to current step
+        # Plot user's trajectory up to current step in shiny green
         fig.add_trace(go.Scatter3d(
             x=v1real_state[0, :step+1],
             y=v1real_state[1, :step+1],
             z=np.zeros(step+1),
             mode='lines+markers',
-            line=dict(color='black', width=3),
-            marker=dict(size=4, color='black'),
+            line=dict(color='limegreen', width=3),
+            marker=dict(size=4, color='limegreen'),
             name='User Trajectory'
         ))
 
-        # Plot user's current position
+        # Plot user's current position in shiny green
         user_position = np.array([v1real_state[0, step], v1real_state[1, step], 0])
         fig.add_trace(go.Scatter3d(
             x=[user_position[0]],
             y=[user_position[1]],
             z=[user_position[2]],
             mode='markers+text',
-            marker=dict(size=7, color='black'),
+            marker=dict(size=7, color='limegreen'),
             text=['User'],
             textposition='top center',
             name='User Position'
@@ -159,7 +163,7 @@ for mcc in range(1, num_MC + 1):
             u=[heading_vector[0]],
             v=[heading_vector[1]],
             w=[heading_vector[2]],
-            colorscale=[[0, 'black'], [1, 'black']],
+            colorscale=[[0, 'limegreen'], [1, 'limegreen']],
             showscale=False,
             sizemode='absolute',
             sizeref=15,  # Adjust sizeref to change the arrow size
@@ -177,13 +181,15 @@ for mcc in range(1, num_MC + 1):
         # Debugging: Print lengths to ensure synchronization
         print(f"Step {step+1}: len(z_k) = {len(z_k)}, len(pos_s_list) = {len(pos_s_list)}, len(clutter_positions) = {len(clutter_positions)}")
 
-        # Initialize legend flags for the current step
-        reflection_path_shown = False
-        reflection_point_shown = False
-        AoA_shown = False
-        AoD_shown = False
+        # Initialize lists to collect SP measurements and clutter points
+        sp_meas_x = []
+        sp_meas_y = []
+        sp_meas_z = []
+        clutter_meas_x = []
+        clutter_meas_y = []
+        clutter_meas_z = []
 
-        # For each measurement, plot the AoA and AoD lines based on association
+        # For each measurement, categorize and collect positions
         for j in range(len(z_k)):
             # Ensure pos_s_list has enough entries
             if j >= len(pos_s_list):
@@ -202,23 +208,13 @@ for mcc in range(1, num_MC + 1):
             source_type, source_idx = assoc  # Unpack association
 
             if source_type == 'clutter':
-                # Plot only a black dot for clutter using stored clutter positions
-                if j < len(clutter_positions):
-                    clutter_pos = clutter_positions[j]
-                    clutter_x, clutter_y, clutter_z = clutter_pos
-                else:
-                    print(f"Warning: No clutter position available for measurement {j} at step {step+1}")
-                    clutter_x = clutter_y = clutter_z = 0  # Default position
+                # Collect clutter positions
+                clutter_pos = clutter_positions[source_idx]
+                clutter_x, clutter_y, clutter_z = clutter_pos
 
-                fig.add_trace(go.Scatter3d(
-                    x=[clutter_x],
-                    y=[clutter_y],
-                    z=[clutter_z],
-                    mode='markers',
-                    marker=dict(size=4, color='black'),
-                    name='Clutter' if j == 0 else None,
-                    showlegend=False if j > 0 else True  # Show legend only once
-                ))
+                clutter_meas_x.append(clutter_x)
+                clutter_meas_y.append(clutter_y)
+                clutter_meas_z.append(clutter_z)
                 continue  # Skip plotting lines for clutter
 
             # Determine source position based on source type
@@ -231,19 +227,16 @@ for mcc in range(1, num_MC + 1):
             else:
                 source_pos = None  # Undefined source
 
-            if source_pos is not None:
-                # Plot AoD line from source to user
+            if source_pos is not None and source_type != 'SP':
+                # Plot AoD line from source to user (excluding SP to avoid cluttering)
                 fig.add_trace(go.Scatter3d(
                     x=[source_pos[0], user_position[0]],
                     y=[source_pos[1], user_position[1]],
                     z=[source_pos[2], user_position[2]],
                     mode='lines',
                     line=dict(color='orange', dash='dot', width=3),
-                    showlegend=False if AoD_shown else True,
-                    name='AoD Line' if not AoD_shown else None
+                    name='AoD Line'
                 ))
-                if not AoD_shown:
-                    AoD_shown = True  # Set flag after first AoD line
 
             # Maintain reflection and AoA plotting
             if source_type == 'VA' and pos_s is not None:
@@ -255,11 +248,8 @@ for mcc in range(1, num_MC + 1):
                     z=[BS[2, 0], pos_s[2]],
                     mode='lines',
                     line=dict(color='red', dash='dash', width=3),
-                    showlegend=False if reflection_path_shown else True,
-                    name='Reflection Path' if not reflection_path_shown else None
+                    name='Reflection Path'
                 ))
-                if not reflection_path_shown:
-                    reflection_path_shown = True  # Set flag after first reflection path
 
                 # Plot reflection path from pos_s to user
                 fig.add_trace(go.Scatter3d(
@@ -277,14 +267,11 @@ for mcc in range(1, num_MC + 1):
                     y=[pos_s[1]],
                     z=[pos_s[2]],
                     mode='markers+text',
-                    marker=dict(size=4, color='magenta', symbol='x'),
+                    marker=dict(size=2, color='magenta', symbol='x'),
                     text=['Reflection Point'],
                     textposition='top center',
-                    name='Reflection Point' if not reflection_point_shown else None,
-                    showlegend=False if reflection_point_shown else True
+                    name='Reflection Point'
                 ))
-                if not reflection_point_shown:
-                    reflection_point_shown = True  # Set flag after first reflection point
 
                 # Plot AoA line based on azimuth and elevation
                 u_AoA = np.array([
@@ -301,11 +288,8 @@ for mcc in range(1, num_MC + 1):
                     z=[user_position[2], AoA_end_pos[2]],
                     mode='lines',
                     line=dict(color='black', dash='dash', width=4),
-                    showlegend=False if AoA_shown else True,
-                    name='AoA Line' if not AoA_shown else None
+                    name='AoA Line'
                 ))
-                if not AoA_shown:
-                    AoA_shown = True  # Set flag after first AoA line
 
                 # Mark AoA end point
                 fig.add_trace(go.Scatter3d(
@@ -314,9 +298,45 @@ for mcc in range(1, num_MC + 1):
                     z=[AoA_end_pos[2]],
                     mode='markers',
                     marker=dict(size=4, color='black'),
-                    name='AoA End' if not AoA_shown else None,
+                    name='AoA End',
                     showlegend=False
                 ))
+
+            # Collect SP measurements for plotting
+            if source_type == 'SP' and source_type is not None:
+                # Calculate measurement position based on range and angles
+                # Assuming elevation_AoA is in radians
+                x_meas = user_position[0] + range_ * np.cos(elevation_AoA) * np.cos(azimuth_AoA)
+                y_meas = user_position[1] + range_ * np.cos(elevation_AoA) * np.sin(azimuth_AoA)
+                z_meas = user_position[2] + range_ * np.sin(elevation_AoA)
+                sp_meas_x.append(x_meas)
+                sp_meas_y.append(y_meas)
+                sp_meas_z.append(z_meas)
+
+        # After processing all measurements, plot SP measurements and clutter
+
+        # Plot SP Measurements as black circles
+        if sp_meas_x and sp_meas_y and sp_meas_z:
+            fig.add_trace(go.Scatter3d(
+                x=sp_meas_x,
+                y=sp_meas_y,
+                z=sp_meas_z,
+                mode='markers',
+                marker=dict(size=4, color='black', symbol='circle'),
+                name='SP Measurements'
+            ))
+
+        # Plot Clutter Measurements as black crosses
+        if clutter_meas_x and clutter_meas_y and clutter_meas_z:
+            fig.add_trace(go.Scatter3d(
+                x=clutter_meas_x,
+                y=clutter_meas_y,
+                z=clutter_meas_z,
+                mode='markers',
+                showlegend=True,
+                marker=dict(size=2, color='black', symbol='x'),
+                name='Clutter'
+            ))
 
         # Update layout with increased figure size
         fig.update_layout(
@@ -351,3 +371,8 @@ for mcc in range(1, num_MC + 1):
             writer.append_data(image)
 
     print(f"Monte Carlo simulation completed. GIF saved as {gif_filename}.")
+
+    # Optional: Clean up temporary PNG files to save disk space
+    # for filename in images:
+    #     os.remove(filename)
+    # print("Temporary image files deleted.")

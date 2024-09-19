@@ -115,7 +115,7 @@ def create_measurement(x, steps, v, ang_v, T, R, L_BS, L_VA, L_SP):
                     step_assoc.append(('SP', j))  # Record association
     
         # Generate clutter (random false measurements)
-        number = np.random.poisson(1)  # Number of clutter points (Poisson distributed)
+        number = np.random.poisson(10)  # Number of clutter points (Poisson distributed)
         for j in range(number):
             clutter = np.array([
                 200 * np.random.rand() - 100,
