@@ -205,7 +205,7 @@ for mcc in range(1, num_MC + 1):
                     y=[pos_s[1]],
                     z=[pos_s[2]],
                     mode='markers+text',
-                    marker=dict(size=2, color='magenta', symbol='x'),
+                    marker=dict(size=1, color='magenta', symbol='x'),
                     #text=['pos_s'],
                     #textposition='top center',
                     name='Reflection Point'
@@ -234,7 +234,7 @@ for mcc in range(1, num_MC + 1):
                     z=[user_position[2], AoA_end[2]],
                     mode='lines',
                     line=dict(color='black', dash='dash', width=3),
-                    showlegend=True,
+                    showlegend=False,
                     name='AoA Line'
                 ))
                 # Mark AoA end point
@@ -273,7 +273,7 @@ for mcc in range(1, num_MC + 1):
         images.append(png_filename)
 
     # Create a GIF from the saved images
-    with imageio.get_writer(gif_filename, mode='I', duration=0.5) as writer:
+    with imageio.get_writer(gif_filename, mode='I', duration=1) as writer:
         for filename in images:
             image = imageio.imread(filename)
             writer.append_data(image)
