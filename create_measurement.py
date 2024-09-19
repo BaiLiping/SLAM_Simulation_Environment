@@ -88,7 +88,42 @@ def create_measurement(x, steps, v, ang_v, T, R, L_BS, L_VA, L_SP):
                 z1.append(z_noisy)
                 index_s.append(1 + j)  # Index for VA
                 pos_s_list.append(pos_s)  # Store pos_s for VA
+        # Loop through each Scatter Point (SP)
+        for j in range(L_SP.shape[1]):
+            # Detect scatter points at specific steps or with a random chance
+            if (i + 1) in [1, 2, 3, 7, 8, 9, 10, 17, 18, 19, 27, 28, 29, 30, 32, 33, 36, 37, 38, 39] or np.random.rand() < P_detection:
+                if np.linalg.norm(L_SP[0:3, j] - x[0:3]) <= Fov:  # Only detect points within the field of view
+                    z = np.zeros(5)  # Measurement vector for this SP
+                    # Compute range and angle measurements
+                    z[0] = np.linalg.norm(L_SP[0:3, j] - x[0:3]) + np.linalg.norm(L_SP[0:3, j] - L_BS[0:3, 0])  # Range to SP
+                    z[1] = -np.arctan2(L_SP[1, j], L_SP[0, j])  # Azimuth angle
+                    z[2] = np.arcsin((L_SP[2, j] - L_BS[2, 0]) / np.linalg.norm(L_SP[0:3, j] - L_BS[0:3, 0]))  # Elevation
+                    z[3] = np.arctan2(L_SP[1, j] - x[1], L_SP[0, j] - x[0]) - x[3]  # Bearing angle
+                    z[4] = np.arcsin((L_SP[2, j] - x[2]) / np.linalg.norm(x[0:3] - L_SP[0:3, j]))  # Elevation AoA
 
+                    # Add noise to the measurement and store it
+                    noise = np.random.multivariate_normal(mean=np.zeros(5), cov=R)
+                    z_noisy = (z + noise)
+                    z1.append(z_noisy)
+                    index_s.append(5 + j)  # Index for SP
+
+        # Generate clutter (random false measurements)
+        number = np.random.poisson(1)  # Number of clutter points (Poisson distributed)
+        for j in range(number):
+            clutter = np.array([200 * np.random.rand() - 100, 200 * np.random.rand() - 100, 40 * np.random.rand()])  # Random clutter position
+            # Compute measurements for clutter points
+            z_clutter = np.zeros(5)  # Measurement vector for clutter
+            z_clutter[0] = np.linalg.norm(clutter[0:3] - x[0:3]) + np.linalg.norm(clutter[0:3] - L_BS[0:3, 0])  # Range
+            z_clutter[1] = -np.arctan2(clutter[1] - L_BS[1, 0], clutter[0] - L_BS[0, 0])  # Azimuth angle
+            z_clutter[2] = np.arcsin((clutter[2] - L_BS[2, 0]) / np.linalg.norm(clutter[0:3] - L_BS[0:3, 0])) - x[3]  # Elevation AoD
+            z_clutter[3] = np.arctan2(clutter[1] - x[1], clutter[0] - x[0])  # Bearing angle
+            z_clutter[4] = np.arcsin((clutter[2] - x[2]) / np.linalg.norm(x[0:3] - clutter[0:3]))  # Elevation AoA
+
+            # Add noise to the clutter measurement and store it
+            noise = np.random.multivariate_normal(mean=np.zeros(5), cov=R)
+            z_clutter_noisy = (z_clutter + noise)
+            z1.append(z_clutter_noisy)
+            index_s.append(0)  # Index 0 represents clutter
 
         # Store the measurements and indices for this time step
         measurement[i] = z1
