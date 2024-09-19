@@ -31,11 +31,17 @@ for mcc in range(1, num_MC + 1):
 
     # Initialize Base Station (BS) and Virtual Anchors (VA)
     BS = np.array([[0], [0], [40]])  # Base Station coordinates (x, y, z)
+    #VA = np.array([
+    #    [200, 0, 40],
+    #    [-200, 0, 40],
+    #    [0, 200, 40],
+    #    [0, -200, 40]
+    #])  # Each row is a VA
     VA = np.array([
-        [200, 0, 40],
-        [-200, 0, 40],
-        [0, 200, 40],
-        [0, -200, 40]
+        [200, 10, 20],
+        [-200, -10, 20],
+        [10, 200, 10],
+        [-10, -200, 10]
     ])  # Each row is a VA
 
     # Initialize Scatter Points (SP) with fixed values
