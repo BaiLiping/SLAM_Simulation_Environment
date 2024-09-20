@@ -24,7 +24,7 @@ images = []
 
 # Define desired figure size
 FIG_WIDTH = 1500  # in pixels
-FIG_HEIGHT = 1500  # in pixels
+FIG_HEIGHT = 1000  # in pixels
 
 # Define legend entries with their corresponding styles
 legend_entries = [
