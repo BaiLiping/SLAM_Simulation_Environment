@@ -37,7 +37,7 @@ def create_measurement(x, steps, v, ang_v, T, R, L_BS, L_VA, L_SP):
     clutter_positions_all = []            # Initialize clutter positions for plotting
 
     P_detection = 1  # Detection probability
-    Fov = 50           # Field of view (maximum range for detecting scatter points)
+    Fov = 100           # Field of view (maximum range for detecting scatter points)
 
     BS0 = L_BS[:, 0]    # Assuming the first BS is the reference BS
 

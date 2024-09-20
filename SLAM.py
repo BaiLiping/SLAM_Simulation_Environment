@@ -23,40 +23,45 @@ gif_filename = 'MonteCarlo.gif'
 images = []
 
 # Define desired figure size
-FIG_WIDTH = 2400  # in pixels
-FIG_HEIGHT = 1600  # in pixels
+FIG_WIDTH = 1500  # in pixels
+FIG_HEIGHT = 1500  # in pixels
 
 # Define legend entries with their corresponding styles
 legend_entries = [
     {
         'name': 'BS',
+        'type': 'Scatter3d',
         'mode': 'markers+text',
-        'marker': {'size': 5, 'color': 'red'},
+        'marker': {'size': 7, 'color': 'red'},
         'text': ['BS'],
         'textposition': 'top center'
     },
     {
         'name': 'VA',
+        'type': 'Scatter3d',
         'mode': 'markers+text',
-        'marker': {'size': 3, 'color': 'purple'},
+        'marker': {'size': 7, 'color': 'purple'},
         'text': [f'VA{va_idx+1}' for va_idx in range(4)],
         'textposition': 'top center'
     },
     {
         'name': 'SP',
+        'type': 'Scatter3d',
         'mode': 'markers+text',
-        'marker': {'size': 3, 'color': 'green'},
+        'marker': {'size': 7, 'color': 'green'},
         'text': [f'SP{sp_idx+1}' for sp_idx in range(4)],
         'textposition': 'top center'
     },
     {
         'name': 'User Trajectory',
+        'type': 'Scatter3d',
         'mode': 'lines+markers',
         'line': {'color': 'limegreen', 'width': 3},
         'marker': {'size': 4, 'color': 'limegreen'}
     },
     {
         'name': 'User Position',
+        'type': 'Scatter3d',
         'mode': 'markers+text',
         'marker': {'size': 7, 'color': 'limegreen'},
         'text': ['User'],
@@ -64,35 +69,40 @@ legend_entries = [
     },
     {
         'name': 'User Heading',
-        'mode': 'cones',
+        'type': 'Cone',
         'marker': {'size': 7, 'color': 'limegreen'}
     },
     {
         'name': 'AoD Line',
+        'type': 'Scatter3d',
         'mode': 'lines',
         'line': {'color': 'orange', 'dash': 'dot', 'width': 3}
     },
     {
         'name': 'AoA Line',
+        'type': 'Scatter3d',
         'mode': 'lines',
         'line': {'color': 'blue', 'dash': 'dash', 'width': 4}
     },
     {
         'name': 'Reflection Path',
+        'type': 'Scatter3d',
         'mode': 'lines',
         'line': {'color': 'red', 'dash': 'dash', 'width': 3}
     },
     {
         'name': 'Reflection Point',
+        'type': 'Scatter3d',
         'mode': 'markers+text',
-        'marker': {'size': 4, 'color': 'magenta', 'symbol': 'x'},
+        'marker': {'size': 7, 'color': 'magenta', 'symbol': 'x'},
         'text': ['RP'],
         'textposition': 'top center'
     },
     {
         'name': 'Clutter',
+        'type': 'Scatter3d',
         'mode': 'markers',
-        'marker': {'size': 2, 'color': 'black', 'symbol': 'x'}
+        'marker': {'size': 7, 'color': 'black', 'symbol': 'x'}
     }
 ]
 
@@ -376,53 +386,57 @@ for mcc in range(1, num_MC + 1):
                         y=[pos_s[1]],
                         z=[pos_s[2]],
                         mode='markers+text',
-                        marker=dict(size=4, color='magenta', symbol='x'),
+                        marker=dict(size=2, color='magenta', symbol='x'),
                         text=['RP'],
                         textposition='top center',
                         name='Reflection Point',
                         showlegend=False
                     ))
 
-            # Plot clutter measurements (without AoA and AoD lines)
-            if len(clutter_positions) > 0:
-                clutter_meas_x = [clutter[0] for clutter in clutter_positions]
-                clutter_meas_y = [clutter[1] for clutter in clutter_positions]
-                clutter_meas_z = [clutter[2] for clutter in clutter_positions]
-                fig.add_trace(go.Scatter3d(
-                    x=clutter_meas_x,
-                    y=clutter_meas_y,
-                    z=clutter_meas_z,
-                    mode='markers',
-                    marker=dict(size=2, color='black', symbol='x'),
-                    name='Clutter',
-                    showlegend=False
-                ))
+        # Plot clutter measurements (without AoA and AoD lines)
+        if len(clutter_positions) > 0:
+            clutter_meas_x = [clutter[0] for clutter in clutter_positions]
+            clutter_meas_y = [clutter[1] for clutter in clutter_positions]
+            clutter_meas_z = [clutter[2] for clutter in clutter_positions]
+            fig.add_trace(go.Scatter3d(
+                x=clutter_meas_x,
+                y=clutter_meas_y,
+                z=clutter_meas_z,
+                mode='markers',
+                marker=dict(size=2, color='black', symbol='x'),
+                name='Clutter',
+                showlegend=False
+            ))
 
         # Add dummy traces for legend entries
         for entry in legend_entries:
-            if entry['mode'] == 'cones':
+            if entry['type'] == 'Cone':
                 # For cones, add a representative cone for the legend
+                # Position it outside the plot range to avoid visibility
                 fig.add_trace(go.Cone(
-                    x=[None],
-                    y=[None],
-                    z=[None],
-                    u=[0],
-                    v=[0],
-                    w=[0],
+                    x=[1000],  # Outside the plot range
+                    y=[1000],
+                    z=[1000],
+                    u=[1],      # Arbitrary direction
+                    v=[1],
+                    w=[1],
                     colorscale=[[0, entry['marker']['color']], [1, entry['marker']['color']]],
                     showscale=False,
                     sizemode='absolute',
-                    sizeref=1,
+                    sizeref=15,  # Adjust sizeref to change the arrow size
                     anchor="tail",
                     name=entry['name'],
                     showlegend=True
                 ))
-            else:
-                # Prepare the arguments for Scatter3d
+            elif entry['type'] == 'Scatter3d':
+                # For Scatter3d, add a dummy point outside the plot range
+                dummy_x = [1000]  # Outside the plot range
+                dummy_y = [1000]
+                dummy_z = [1000]
                 scatter_args = {
-                    'x': entry.get('x', []),
-                    'y': entry.get('y', []),
-                    'z': entry.get('z', []),
+                    'x': dummy_x,
+                    'y': dummy_y,
+                    'z': dummy_z,
                     'mode': entry['mode'],
                     'marker': entry.get('marker', {}),
                     'line': entry.get('line', {}),
@@ -433,7 +447,6 @@ for mcc in range(1, num_MC + 1):
                 # Only set 'textposition' if it's defined
                 if 'textposition' in entry:
                     scatter_args['textposition'] = entry['textposition']
-                
                 fig.add_trace(go.Scatter3d(**scatter_args))
 
         # Update layout with increased figure size
