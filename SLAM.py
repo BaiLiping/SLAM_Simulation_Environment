@@ -23,8 +23,8 @@ gif_filename = 'MonteCarlo.gif'
 images = []
 
 # Define desired figure size
-FIG_WIDTH = 1500  # in pixels
-FIG_HEIGHT = 1000  # in pixels
+FIG_WIDTH = 2000  # in pixels
+FIG_HEIGHT = 1500  # in pixels
 
 # Define legend entries with their corresponding styles
 legend_entries = [
@@ -79,10 +79,26 @@ legend_entries = [
         'line': {'color': 'orange', 'dash': 'dot', 'width': 3}
     },
     {
+        'name': 'AoD End',
+        'type': 'Scatter3d',
+        'mode': 'markers',
+        'marker': {'size': 7, 'color': 'orange'},
+        'text': ['AoD End'],
+        'textposition': 'top center'
+    },
+    {
         'name': 'AoA Line',
         'type': 'Scatter3d',
         'mode': 'lines',
         'line': {'color': 'blue', 'dash': 'dash', 'width': 4}
+    },
+    {
+        'name': 'AoA End',
+        'type': 'Scatter3d',
+        'mode': 'markers',
+        'marker': {'size': 7, 'color': 'blue'},
+        'text': ['AoA End'],
+        'textposition': 'top center'
     },
     {
         'name': 'Reflection Path',
@@ -174,7 +190,7 @@ for mcc in range(1, num_MC + 1):
             y=[BS[1, 0]],
             z=[BS[2, 0]],
             mode='markers+text',
-            marker=dict(size=5, color='red'),
+            marker=dict(size=7, color='red'),
             text=['BS'],
             textposition='top center',
             name='BS',
@@ -187,7 +203,7 @@ for mcc in range(1, num_MC + 1):
             y=VA[:, 1],
             z=VA[:, 2],
             mode='markers+text',
-            marker=dict(size=3, color='purple'),
+            marker=dict(size=7, color='purple'),
             text=[f'VA{va_idx+1}' for va_idx in range(VA.shape[0])],
             textposition='top center',
             name='VA',
@@ -200,7 +216,7 @@ for mcc in range(1, num_MC + 1):
             y=SP[:, 1],
             z=SP[:, 2],
             mode='markers+text',
-            marker=dict(size=3, color='green'),
+            marker=dict(size=7, color='green'),
             text=[f'SP{sp_idx+1}' for sp_idx in range(SP.shape[0])],
             textposition='top center',
             name='SP',
